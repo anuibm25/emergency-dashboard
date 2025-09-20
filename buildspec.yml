@@ -3,7 +3,7 @@ version: 0.2
 phases:
   install:
     runtime-versions:
-      nodejs: 18 # Specify the Node.js version suitable for your Angular project
+      nodejs: 20 # Specify the Node.js version suitable for your Angular project
     commands:
       - echo "Installing npm dependencies..."
       - npm install
