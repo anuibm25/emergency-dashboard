@@ -1,63 +1,33 @@
 version: 0.2
 
-env:
-  variables:
-    # Override these in CodeBuild project environment or via pipeline (required):
-    REPOSITORY_URI: "" # e.g. 123456789012.dkr.ecr.us-west-2.amazonaws.com/emergency-dashboard
-    IMAGE_TAG: "latest"
-
 phases:
   install:
     runtime-versions:
-      nodejs: 20
-      docker: 20
+      nodejs: 18 # Specify the Node.js version suitable for your Angular project
     commands:
-      - echo Installing source NPM dependencies
-      - npm ci
-      - echo Logging in to Amazon ECR
-      - |
-        if [ -n "$REPOSITORY_URI" ]; then
-          aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
-        else
-          echo "REPOSITORY_URI not set; skipping ECR login"
-        fi
+      - echo "Installing npm dependencies..."
+      - npm install
+
   pre_build:
     commands:
-      - echo Pre-build: determine image tag
-      - export IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
-      - echo Using IMAGE_TAG=$IMAGE_TAG
+      - echo "Running pre-build tasks (e.g., linting, tests)..."
+      # - npm test # Uncomment if you have tests to run
+      # - npm run lint # Uncomment if you have linting to run
+
   build:
     commands:
-      - echo Building Angular SSR application (production)
-      - npm run build -- --configuration production
-      - echo Build completed. Building Docker image
-      - |
-        if [ -n "$REPOSITORY_URI" ]; then
-          docker build -t $REPOSITORY_URI:$IMAGE_TAG .
-          docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
-        else
-          echo "REPOSITORY_URI not set; building local image named emergency-dashboard:$IMAGE_TAG"
-          docker build -t emergency-dashboard:$IMAGE_TAG .
-        fi
+      - echo "Building the Angular application for production..."
+      - npm run build -- --configuration=production # Or ng build --configuration=production
+      # If your project name is not the same as the default, you might need:
+      # - npm run build -- --configuration=production --output-path=dist/your-project-name
+
   post_build:
     commands:
-      - echo Pushing Docker image (if ECR configured)
-      - |
-        if [ -n "$REPOSITORY_URI" ]; then
-          docker push $REPOSITORY_URI:$IMAGE_TAG
-          docker push $REPOSITORY_URI:latest
-        else
-          echo "REPOSITORY_URI empty; skipping push"
-        fi
+      - echo "Post-build tasks (e.g., zipping artifacts)..."
+
 artifacts:
   files:
-    - dist/**
-
-cache:
-  paths:
-    - node_modules/**
-
-reports:
-  name: build-info
-  files:
-    - dist/**
+    - '**/*'
+  base-directory: dist/emergency-dashboard # Replace <your-project-name> with your actual project name
+  # If you have a different output path configured in angular.json, adjust base-directory accordingly.
+  # For example, if your build outputs directly to 'dist', then use: base-directory: dist
