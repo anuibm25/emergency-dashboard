@@ -1,0 +1,63 @@
+version: 0.2
+
+env:
+  variables:
+    # Override these in CodeBuild project environment or via pipeline (required):
+    REPOSITORY_URI: "" # e.g. 123456789012.dkr.ecr.us-west-2.amazonaws.com/emergency-dashboard
+    IMAGE_TAG: "latest"
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 20
+      docker: 20
+    commands:
+      - echo Installing source NPM dependencies
+      - npm ci
+      - echo Logging in to Amazon ECR
+      - |
+        if [ -n "$REPOSITORY_URI" ]; then
+          aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $REPOSITORY_URI
+        else
+          echo "REPOSITORY_URI not set; skipping ECR login"
+        fi
+  pre_build:
+    commands:
+      - echo Pre-build: determine image tag
+      - export IMAGE_TAG=${CODEBUILD_RESOLVED_SOURCE_VERSION:0:7}
+      - echo Using IMAGE_TAG=$IMAGE_TAG
+  build:
+    commands:
+      - echo Building Angular SSR application (production)
+      - npm run build -- --configuration production
+      - echo Build completed. Building Docker image
+      - |
+        if [ -n "$REPOSITORY_URI" ]; then
+          docker build -t $REPOSITORY_URI:$IMAGE_TAG .
+          docker tag $REPOSITORY_URI:$IMAGE_TAG $REPOSITORY_URI:latest
+        else
+          echo "REPOSITORY_URI not set; building local image named emergency-dashboard:$IMAGE_TAG"
+          docker build -t emergency-dashboard:$IMAGE_TAG .
+        fi
+  post_build:
+    commands:
+      - echo Pushing Docker image (if ECR configured)
+      - |
+        if [ -n "$REPOSITORY_URI" ]; then
+          docker push $REPOSITORY_URI:$IMAGE_TAG
+          docker push $REPOSITORY_URI:latest
+        else
+          echo "REPOSITORY_URI empty; skipping push"
+        fi
+artifacts:
+  files:
+    - dist/**
+
+cache:
+  paths:
+    - node_modules/**
+
+reports:
+  - name: build-info
+    files:
+      - dist/**
