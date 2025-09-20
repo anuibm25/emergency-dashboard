@@ -58,6 +58,6 @@ cache:
     - node_modules/**
 
 reports:
-  - name: build-info
+    name: build-info
     files:
       - dist/**
