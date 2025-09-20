@@ -3,15 +3,39 @@
   position: sticky;
   bottom: 0;
   width: 100%;
-  height: 120px; // Change this value as needed
-  background: #222;
+  height: var(--footer-height); /* dynamic from root variable */
   color: #fff;
-  padding: 0.5rem 1.5rem 0.5rem 1.5rem;
-  box-shadow: 0 -2px 8px rgba(0,0,0,0.08);
+  padding: 0.45rem 1.25rem 0.55rem 1.25rem;
   display: flex;
   flex-direction: column;
-  border-top: 2px solid #444;
   z-index: 100;
+  box-sizing: border-box;
+  overflow: hidden; /* hide outer scroll */
+  /* Layered glass gradient background for cohesion with header / panels */
+  background:
+    linear-gradient(120deg, rgba(255,255,255,0.055) 0%, rgba(255,255,255,0.02) 35%, rgba(255,255,255,0.04) 55%, rgba(255,255,255,0.015) 100%),
+    linear-gradient(90deg, var(--footer-grad-start) 0%, var(--footer-grad-mid) 52%, var(--footer-grad-end) 100%);
+  backdrop-filter: blur(12px) saturate(140%);
+  -webkit-backdrop-filter: blur(12px) saturate(140%);
+  border-top: 1px solid var(--footer-border);
+  box-shadow: 0 -4px 14px -2px rgba(0,0,0,0.55), 0 -1px 3px rgba(0,0,0,0.45);
+  position: sticky;
+}
+
+/* Optional variant classes if future incident-type theming is needed */
+.footer-notification-panel.footer-fire {
+  --footer-grad-start: #2a1009;
+  --footer-grad-mid: #3b1810;
+  --footer-grad-end: #2a1009;
+  --footer-border: rgba(255,120,72,0.28);
+  --footer-border-strong: rgba(255,160,110,0.45);
+}
+.footer-notification-panel.footer-flood {
+  --footer-grad-start: #0f1e33;
+  --footer-grad-mid: #142b45;
+  --footer-grad-end: #0f1e33;
+  --footer-border: rgba(90,160,255,0.28);
+  --footer-border-strong: rgba(120,190,255,0.50);
 }
 .notification-controls {
   display: flex;
@@ -20,32 +44,149 @@
   margin-bottom: 0.5rem;
 }
 .notification-list {
+  position: relative;
   flex: 1 1 auto;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  padding-right: 6px; /* space for hidden scrollbar */
+  scrollbar-width: none; /* Firefox */
+  -webkit-overflow-scrolling: touch;
 }
+.notification-list::-webkit-scrollbar { display: none; }
+
+/* Gradient fade top/bottom if scrolling */
+.notification-list::before,
+.notification-list::after {
+  content: '';
+  position: sticky;
+  left: 0;
+  right: 0;
+  height: 12px;
+  pointer-events: none;
+  z-index: 2;
+}
+.notification-list::before { top: 0; background: linear-gradient(to bottom,var(--footer-grad-mid),rgba(0,0,0,0)); }
+.notification-list::after { bottom: 0; background: linear-gradient(to top,var(--footer-grad-mid),rgba(0,0,0,0)); }
 .notification-item {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 0.25rem 0;
-  border-bottom: 1px solid #333;
+  gap: 0.85rem;
+  padding: 0.18rem 0;
+  border-bottom: 1px dashed var(--footer-border);
+  font-size: 0.78rem;
+  line-height: 1.2;
+  position: relative;
+}
+.notification-item:last-child { border-bottom: 0; }
+.notification-item .priority-badge {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.18), 0 0 6px -1px rgba(0,0,0,0.6);
+  background: linear-gradient(135deg,#777,#444);
+  flex: 0 0 auto;
+  position: relative;
+  top: 0;
+}
+/* Type color mapping */
+.notification-item[data-type='road'] .priority-badge { background: linear-gradient(135deg,#ff9800,#ef6c00); }
+.notification-item[data-type='hazard'] .priority-badge { background: linear-gradient(135deg,#e53935,#b71c1c); }
+.notification-item[data-type='responder'] .priority-badge { background: linear-gradient(135deg,#42a5f5,#1e88e5); }
+.notification-item[data-type='other'] .priority-badge { background: linear-gradient(135deg,#8e24aa,#5e35b1); }
+
+/* Read state muting */
+.notification-item.read .priority-badge { filter: grayscale(55%) brightness(0.75); opacity: 0.55; }
+
+/* Pulsing ring for NEW / unread hazard events */
+@keyframes hazardPulseRing {
+  0% { transform: scale(1); opacity: 0.9; }
+  60% { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+.notification-item[data-type='hazard']:not(.read) .priority-badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle at center, rgba(229,57,53,0.55) 0%, rgba(229,57,53,0.05) 65%, rgba(229,57,53,0) 75%);
+  animation: hazardPulseRing 1.8s ease-out infinite;
+  pointer-events: none;
 }
 .notification-item.read {
   opacity: 0.5;
 }
-.timestamp {
-  font-size: 0.9em;
-  color: #bbb;
-  min-width: 60px;
+.timestamp { font-size: 0.7rem; color: #b6bcc3; min-width: 54px; }
+.message { flex: 1 1 auto; }
+.no-events { color:#97a0a9; font-style: italic; padding:0.4rem 0; font-size:0.75rem; }
+
+/* Fade-in animation for first appearance */
+@keyframes notifFadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
-.message {
-  flex: 1 1 auto;
+.fade-in { animation: notifFadeIn .38s ease-out both; }
+
+/* Slight stagger using nth-child (lightweight, no JS) */
+.notification-item.fade-in:nth-child(1) { animation-delay: 0ms; }
+.notification-item.fade-in:nth-child(2) { animation-delay: 40ms; }
+.notification-item.fade-in:nth-child(3) { animation-delay: 80ms; }
+.notification-item.fade-in:nth-child(4) { animation-delay: 120ms; }
+.notification-item.fade-in:nth-child(5) { animation-delay: 160ms; }
+
+/* Mark-all button alignment */
+.mark-all-btn { margin-left: auto; }
+
+/* Footer action buttons */
+.footer-btn {
+  --btn-bg: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.06) 100%);
+  --btn-bg-hover: linear-gradient(135deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.09) 100%);
+  --btn-bg-active: linear-gradient(135deg, rgba(255,255,255,0.24) 0%, rgba(255,255,255,0.11) 100%);
+  --btn-border: var(--footer-border-strong);
+  --btn-color: #f5f7fa;
+  font: 500 0.7rem/1.1 system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', Arial, sans-serif;
+  padding: 4px 10px 5px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--btn-border);
+  background: var(--btn-bg);
+  color: var(--btn-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  letter-spacing: .3px;
+  transition: background .18s, border-color .18s, color .18s, box-shadow .18s, transform .18s;
+  position: relative;
+  -webkit-user-select: none;
+  user-select: none;
+  backdrop-filter: blur(2px) saturate(160%);
 }
-.no-events {
-  color: #aaa;
-  font-style: italic;
-  padding: 0.5rem 0;
+.footer-btn:hover { background: var(--btn-bg-hover); }
+.footer-btn:active { background: var(--btn-bg-active); transform: translateY(1px); }
+.footer-btn:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 2px rgba(66,165,245,0.65), 0 0 0 4px rgba(25,118,210,0.35);
 }
+.footer-btn[disabled], .footer-btn[aria-disabled='true'] {
+  opacity: 0.45;
+  cursor: default;
+  pointer-events: none;
+}
+
+/* Icon-only variant */
+.footer-btn--icon {
+  padding: 4px;
+  width: 26px;
+  height: 26px;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
+.footer-btn--icon .btn-label-text { display: none; }
+
+/* Subtle tooltip using native title attribute; ensure consistent cursor */
+.footer-btn--icon[title] { cursor: pointer; }
+
+/* Align icon button within notification item */
+.notification-item .footer-btn--icon { margin-left: auto; }
