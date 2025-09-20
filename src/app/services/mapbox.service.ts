@@ -44,6 +44,7 @@ async get_mapbox_key(){
 
   async getRoute(start: [number, number], end: [number, number]): Promise<[number, number][]> {
     // Mapbox expects [lon,lat]
+    this.get_mapbox_key();
     const coords = `${start[1]},${start[0]};${end[1]},${end[0]}`;
     const url = `${this.baseUrl}/${coords}?geometries=geojson&access_token=${this.secret}`;
     const response = await fetch(url);
