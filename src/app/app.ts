@@ -442,6 +442,7 @@ export class App {
       const end = hzCentroid;
       // Fetch Mapbox routes
       try {
+        console.log(`Fetching routes for ${incident}...`);
         const suggestedRoute = await this.mapboxService.getRoute(startSuggested, end);
         const alternateRoute = await this.mapboxService.getRoute(startAlternate, end);
         this.incidentRoutes[incident] = [
