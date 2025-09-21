@@ -14,8 +14,6 @@ export class MapboxService {
 // https://docs.aws.amazon.com/sdk-for-javascript/v3/developer-guide/getting-started.html
 
 
-secret = "";
-
 async get_mapbox_key(){
   let response;
 
@@ -37,16 +35,16 @@ async get_mapbox_key(){
     throw error;
   }
 
-  this.secret = response.SecretString ?? "";
+  return response.SecretString;
 }
   
   
 
   async getRoute(start: [number, number], end: [number, number]): Promise<[number, number][]> {
     // Mapbox expects [lon,lat]
-    this.get_mapbox_key();
+    const secretToken = await this.get_mapbox_key();
     const coords = `${start[1]},${start[0]};${end[1]},${end[0]}`;
-    const url = `${this.baseUrl}/${coords}?geometries=geojson&access_token=${this.secret}`;
+    const url = `${this.baseUrl}/${coords}?geometries=geojson&access_token=${secretToken}`;
     const response = await fetch(url);
     if (!response.ok) throw new Error('Mapbox Directions API error');
     const data = await response.json();
