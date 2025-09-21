@@ -1,5 +1,5 @@
 import { Injectable } from '@angular/core';
-import { MAPBOX_API_KEY } from '../mapbox.config';
+//import { MAPBOX_API_KEY } from '../mapbox.config';
 import {
   SecretsManagerClient,
   GetSecretValueCommand,
@@ -42,10 +42,12 @@ async get_mapbox_key(){
 
   async getRoute(start: [number, number], end: [number, number]): Promise<[number, number][]> {
     // Mapbox expects [lon,lat]
-    const secretToken = await this.get_mapbox_key();
+    let secretToken = await this.get_mapbox_key();
+    let secretKey = secretToken?.replace('{"MAPBOX_API_KEY":"','').replace('"}','');
 
+    console.log("secretKey = " + secretKey);
     const coords = `${start[1]},${start[0]};${end[1]},${end[0]}`;
-    const url = `${this.baseUrl}/${coords}?geometries=geojson&access_token=${secretToken}`;
+    const url = `${this.baseUrl}/${coords}?geometries=geojson&access_token=${secretKey}`;
     console.log(url)
     const response = await fetch(url);
     if (!response.ok) throw new Error('Mapbox Directions API error');
