@@ -43,8 +43,10 @@ async get_mapbox_key(){
   async getRoute(start: [number, number], end: [number, number]): Promise<[number, number][]> {
     // Mapbox expects [lon,lat]
     const secretToken = await this.get_mapbox_key();
+
     const coords = `${start[1]},${start[0]};${end[1]},${end[0]}`;
     const url = `${this.baseUrl}/${coords}?geometries=geojson&access_token=${secretToken}`;
+    console.log(url)
     const response = await fetch(url);
     if (!response.ok) throw new Error('Mapbox Directions API error');
     const data = await response.json();
