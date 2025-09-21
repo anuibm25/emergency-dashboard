@@ -42,6 +42,7 @@ async get_mapbox_key(){
 
   async getRoute(start: [number, number], end: [number, number]): Promise<[number, number][]> {
     // Mapbox expects [lon,lat]
+    console.log("Getting mapbox key");
     let secretToken = await this.get_mapbox_key();
     let secretKey = secretToken?.replace('{"MAPBOX_API_KEY":"','').replace('"}','');
 
