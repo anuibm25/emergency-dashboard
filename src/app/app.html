@@ -22,11 +22,13 @@
 				[hazardZones]="hazardZones"
 				[hazardPredictions]="hazardPredictions"
 				[victimClusters]="mapVictimClusters"
+				[showIndividualVictims]="victimViewMode === 'individual'"
 				[responders]="responders"
 				[routes]="routes"
 				[facilities]="facilities"
 				[predictionTimestamp]="predictionTimestamp"
 				[mapMode]="mapMode"
+				[mapCenter]="mapCenter"
 				(predictionTimestampChange)="predictionTimestamp = $event"
 			/>
 		<app-right-panel-ai-assistant
